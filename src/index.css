@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0B0C0E;
+  --ink: #EDE6DC;
+  --mute: #9AA4AB;
+  --red: #C0392B;
+  --amber: #E59838;
+  --glass: rgba(13, 43, 62, 0.58);
+  --line: rgba(237, 230, 220, 0.2);
+  color-scheme: dark;
+}
+
+html, body, #root {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+}
