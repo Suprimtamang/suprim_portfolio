@@ -9,7 +9,7 @@ export function TopBar() {
   const toggleTheme = useSystemStore((s) => s.toggleTheme);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex justify-between items-start gap-3 p-4 pointer-events-none">
+    <div className="fixed top-0 left-0 right-0 z-[60] flex justify-between items-start gap-3 p-4 pointer-events-none">
       <div className="pointer-events-auto bg-[var(--glass)] border border-[var(--line)] backdrop-blur-md rounded-xl p-3 shadow-lg">
         <b className="block text-base tracking-wide">Suprim Tamang <span className="text-[var(--amber)]">/</span></b>
         <span className="text-xs text-[var(--mute)]">Systems · security · full-stack</span>
@@ -36,7 +36,7 @@ export function TopBar() {
           onClick={() => setMode(mode === 'classic' ? 'scroll' : 'classic')}
           className="bg-[var(--glass)] text-[var(--ink)] border border-[var(--line)] rounded-lg px-3 py-1.5 text-xs cursor-pointer backdrop-blur-md hover:border-[var(--amber)] hover:text-[var(--amber)]"
         >
-          {mode === 'classic' ? 'Back to 3D' : 'Read the story'}
+          {mode === 'classic' ? 'Back to 3D' : 'Read the text version'}
         </button>
       </div>
     </div>

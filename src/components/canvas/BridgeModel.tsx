@@ -152,6 +152,7 @@ export function BridgeModel() {
     return geometry;
   }, []);
   const initialWaterPos = useMemo(() => Float32Array.from(waterGeo.attributes.position.array), [waterGeo]);
+  const gantryGeo = useMemo(() => new THREE.PlaneGeometry(10, 3.1), []);
   const gantryCanvases = useMemo(() => GANTRIES_DATA.map((gantry) => {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
@@ -271,7 +272,7 @@ export function BridgeModel() {
         return (
           <group key={i} position={[x, 63.5, 0]}>
             <mesh
-              geometry={new THREE.PlaneGeometry(10, 3.1)}
+              geometry={gantryGeo}
               onPointerOver={() => {
                 document.body.style.cursor = 'pointer';
                 setHoveredGantry(i);

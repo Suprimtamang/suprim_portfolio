@@ -1,11 +1,10 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { ScrollControls, Scroll } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { BridgeModel } from './BridgeModel';
 import { SkyOverview } from './SkyOverview';
-import { ScrollCameraRig } from './ScrollCameraRig';
+import { ScrollJourney } from './ScrollJourney';
 import { HologramAvatar } from './HologramAvatar';
 import { useSystemStore } from '../../store/useSystemStore';
 
@@ -72,18 +71,15 @@ export function SceneCanvas() {
       >
         <color attach="background" args={['#74b9e8']} />
         <fog attach="fog" args={['#74b9e8', 180, 900]} />
-        <ScrollControls damping={0.25} pages={5}>
+        <ScrollJourney damping={0.25}>
           <DayNightEnvironment />
-          <ScrollCameraRig />
-          <Scroll>
-            <BridgeModel />
-            <SkyOverview />
-            <HologramAvatar />
-          </Scroll>
-          <EffectComposer enabled={theme === 'night'}>
-            <Bloom intensity={1.5} luminanceThreshold={1} mipmapBlur />
-          </EffectComposer>
-        </ScrollControls>
+          <BridgeModel />
+          <SkyOverview />
+          <HologramAvatar />
+        </ScrollJourney>
+        <EffectComposer enabled={theme === 'night'}>
+          <Bloom intensity={1.5} luminanceThreshold={1} mipmapBlur />
+        </EffectComposer>
       </Canvas>
     </div>
   );

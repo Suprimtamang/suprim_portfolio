@@ -59,7 +59,7 @@ export const LAYERS_DATA: LayerData[] = [
     bullets: [
       'Simplify (Portugal Admission Guide) — Interactive roadmap for international students',
       '10+ university admissions guided during earlier MVP and platform growth',
-      'Quidgest Genio Low-Code Software Engineer Apprentice frontend training',
+      'Quidgest Genio — intensive one-week frontend software externship',
     ],
     hint: 'Hover the gantry signs above the road.',
   },

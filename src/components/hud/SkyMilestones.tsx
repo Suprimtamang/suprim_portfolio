@@ -2,7 +2,7 @@ import { useSystemStore } from '../../store/useSystemStore';
 
 const MILESTONES = [
   ['2021', 'Systems foundation', 'C, OCaml and Java work across filesystems, interpreters and data structures.'],
-  ['2023', 'Simplify', 'Built an admissions guide for international students navigating Portugal.'],
+  ['2024', 'Simplify', 'Built an admissions guide for international students navigating Portugal.'],
   ['2025', 'AdSecOps', 'Designed Sajuro, an identity-monitoring and token-quarantine simulator.'],
   ['2026', 'Cloud & community', 'Google Cloud cybersecurity certification and Nepalese in Tech Europe.'],
 ];

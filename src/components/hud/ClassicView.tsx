@@ -1,8 +1,8 @@
 import { useSystemStore, LAYERS_DATA } from '../../store/useSystemStore';
+import { CvDownloadButton } from '../ui/CvDownloadButton';
 
 export function ClassicView() {
   const mode = useSystemStore((s) => s.mode);
-  const setMode = useSystemStore((s) => s.setMode);
   if (mode !== 'classic') return null;
 
   return (
@@ -15,7 +15,7 @@ export function ClassicView() {
           <div className="flex flex-wrap gap-3 mt-6">
             <a href="mailto:s.tamang@campus.fct.unl.pt" className="bg-[var(--amber)] text-[#1a1412] rounded-lg px-4 py-2 text-sm font-semibold">Start a conversation</a>
             <a href="https://github.com/Suprimtamang" target="_blank" rel="noopener noreferrer" className="border border-[var(--line)] rounded-lg px-4 py-2 text-sm hover:border-[var(--amber)]">GitHub ↗</a>
-            <button type="button" onClick={() => setMode('scroll')} className="border border-[var(--line)] rounded-lg px-4 py-2 text-sm hover:border-[var(--amber)]">Explore 3D journey</button>
+            <CvDownloadButton variant="solid" />
           </div>
         </header>
         
@@ -36,6 +36,7 @@ export function ClassicView() {
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <a href="https://linkedin.com/in/suprim-tamang-b864a9242" target="_blank" rel="noopener noreferrer" className="text-[var(--amber)] hover:underline">LinkedIn ↗</a>
             <a href="mailto:s.tamang@campus.fct.unl.pt" className="text-[var(--amber)] hover:underline">s.tamang@campus.fct.unl.pt</a>
+            <CvDownloadButton />
             <span className="text-[var(--mute)]">Lisbon, Portugal · Kathmandu, Nepal</span>
           </div>
         </div>
