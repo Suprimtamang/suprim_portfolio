@@ -3,12 +3,17 @@ import { useSystemStore } from '../../store/useSystemStore';
 export function SajuroQuarantineModal() {
   const status = useSystemStore((s) => s.tokenAnomalyStatus);
   const quarantineToken = useSystemStore((s) => s.quarantineToken);
+  const closeQuarantineModal = useSystemStore((s) => s.closeQuarantineModal);
 
   if (status !== 'inspecting') return null;
 
   return (
-    <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(420px,calc(100vw-32px))] bg-[#0a0e12]/92 border border-[var(--red)] p-5 rounded-xl z-50 backdrop-blur-md shadow-2xl">
-      <div className="text-[11px] tracking-widest uppercase text-[#ff8c7e]">Graph API token anomaly</div>
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/35 z-50" onClick={closeQuarantineModal}>
+      <div role="dialog" aria-modal="true" aria-labelledby="anomaly-title" className="w-[min(420px,100%)] bg-[#0a0e12]/95 border border-[var(--red)] p-5 rounded-xl backdrop-blur-md shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <div className="flex items-start justify-between gap-4">
+        <div id="anomaly-title" className="text-[11px] tracking-widest uppercase text-[#ff8c7e]">Graph API token anomaly</div>
+        <button type="button" aria-label="Close anomaly dialog" onClick={closeQuarantineModal} className="text-[var(--mute)] hover:text-[var(--ink)] cursor-pointer">×</button>
+      </div>
       <pre className="my-3 font-mono text-xs text-[#ff8c7e] whitespace-pre-wrap leading-relaxed bg-black/40 p-3 rounded">
         {`Scope:     ads_management
 Source IP: unauthorized
@@ -21,6 +26,7 @@ Status:    ACTIVE — traffic paused`}
         [ Quarantine Token ]
       </button>
       <small className="block mt-3 text-[11px] text-[var(--mute)]">Simulation only — no real tokens or data.</small>
+      </div>
     </div>
   );
 }

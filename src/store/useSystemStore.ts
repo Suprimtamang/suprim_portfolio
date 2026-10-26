@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 
-export type ViewMode = 'aerial' | 'scroll' | 'classic';
+export type ViewMode = 'scroll' | 'classic';
 export type LayerIndex = -1 | 0 | 1 | 2 | 3;
 export type TokenAnomalyStatus = 'active' | 'inspecting' | 'quarantined';
+export type ThemeMode = 'day' | 'night';
 
 export interface LayerData {
   id: LayerIndex;
@@ -89,36 +90,37 @@ interface SystemState {
   tokenAnomalyStatus: TokenAnomalyStatus;
   hoveredGantry: number | null;
   toastMessage: string | null;
+  theme: ThemeMode;
 
   setMode: (mode: ViewMode) => void;
   setActiveLayer: (layer: LayerIndex) => void;
   setElevation: (y: number) => void;
   toggleSonar: () => void;
   openQuarantineModal: () => void;
+  closeQuarantineModal: () => void;
   quarantineToken: () => void;
   setHoveredGantry: (index: number | null) => void;
   triggerToast: (msg: string) => void;
+  toggleTheme: () => void;
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useSystemStore = create<SystemState>((set) => ({
-  mode: 'aerial',
+  mode: 'scroll',
   activeLayer: -1,
   elevation: 90,
   sonarMode: false,
   tokenAnomalyStatus: 'active',
   hoveredGantry: null,
   toastMessage: null,
+  theme: 'day',
 
   setMode: (mode) =>
     set((state) => {
-      if (mode === 'scroll') {
-        window.scrollTo({ top: 0, behavior: 'instant' });
-      }
       return {
         mode,
-        activeLayer: mode === 'aerial' ? -1 : state.activeLayer === -1 ? 0 : state.activeLayer,
+        activeLayer: state.activeLayer === -1 ? 0 : state.activeLayer,
       };
     }),
 
@@ -137,6 +139,7 @@ export const useSystemStore = create<SystemState>((set) => ({
     }),
 
   openQuarantineModal: () => set({ tokenAnomalyStatus: 'inspecting' }),
+  closeQuarantineModal: () => set({ tokenAnomalyStatus: 'active' }),
 
   quarantineToken: () => {
     if (toastTimer) clearTimeout(toastTimer);
@@ -154,4 +157,9 @@ export const useSystemStore = create<SystemState>((set) => ({
     toastTimer = setTimeout(() => set({ toastMessage: null }), 2600);
     set({ toastMessage: msg });
   },
+
+  toggleTheme: () =>
+    set((state) => ({
+      theme: state.theme === 'day' ? 'night' : 'day',
+    })),
 }));

@@ -20,7 +20,7 @@ export function LayerCards() {
     return () => clearInterval(timer);
   }, []);
 
-  if (mode === 'classic') return null;
+  if (mode === 'classic' || (mode === 'scroll' && activeLayer === 3)) return null;
 
   const data = activeLayer < 0 ? INTRO_LAYER : LAYERS_DATA[activeLayer];
 
@@ -43,7 +43,7 @@ export function LayerCards() {
       )}
 
       {/* Main Layer HUD Card */}
-      <div className="fixed left-14 bottom-6 w-[min(450px,calc(100vw-72px))] p-5 bg-[var(--glass)] border border-[var(--line)] rounded-xl backdrop-blur-md z-40 shadow-2xl">
+      <div className="fixed left-14 bottom-6 w-[min(450px,calc(100vw-72px))] max-h-[calc(100vh-7rem)] overflow-auto p-5 bg-[var(--glass)] border border-[var(--line)] rounded-xl backdrop-blur-md z-40 shadow-2xl">
         <div className="text-[11px] tracking-widest uppercase text-[var(--amber)]">
           {data.tag} {data.subtitle ? `· ${data.subtitle}` : ''}
         </div>
@@ -54,6 +54,12 @@ export function LayerCards() {
           ))}
         </ul>
         <p className="text-xs text-[var(--mute)]">{data.hint}</p>
+        {activeLayer === -1 && (
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            <a href="mailto:s.tamang@campus.fct.unl.pt" className="rounded-lg bg-[var(--amber)] px-3 py-1.5 font-semibold text-[#1a1412]">Work with me</a>
+            <a href="https://www.linkedin.com/in/suprim-tamang-b864a9242" target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[var(--line)] px-3 py-1.5 hover:border-[var(--amber)]">LinkedIn ↗</a>
+          </div>
+        )}
 
         {activeLayer === 3 && (
           <div className="mt-3 pt-3 border-t border-[var(--line)] font-mono text-[11px] leading-relaxed">
