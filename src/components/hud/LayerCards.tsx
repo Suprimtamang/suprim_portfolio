@@ -28,7 +28,7 @@ export function LayerCards() {
     <>
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed left-1/2 top-20 -translate-x-1/2 bg-[var(--glass)] border border-[var(--line)] px-4 py-2 rounded-full z-50 text-xs backdrop-blur-md animate-fade-in">
+        <div role="status" aria-live="polite" className="fixed left-1/2 top-20 -translate-x-1/2 bg-[var(--glass)] border border-[var(--line)] px-4 py-2 rounded-full z-50 text-xs backdrop-blur-md animate-fade-in">
           {toastMessage}
         </div>
       )}

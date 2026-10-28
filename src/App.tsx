@@ -1,11 +1,11 @@
 import { SceneCanvas } from './components/canvas/SceneCanvas';
 import { TopBar } from './components/hud/TopBar';
 import { ElevationMeter } from './components/hud/ElevationMeter';
-import { LayerCards } from './components/hud/LayerCards';
 import { ClassicView } from './components/hud/ClassicView';
 import { SajuroQuarantineModal } from './components/simulations/SajuroQuarantineModal';
 import { ScrollJourneyHUD } from './components/hud/ScrollJourneyHUD';
-import { SkyMilestones } from './components/hud/SkyMilestones';
+import { GameHUD } from './components/hud/GameHUD';
+import { MiniGames } from './components/hud/MiniGames';
 
 export default function App() {
   return (
@@ -15,8 +15,8 @@ export default function App() {
       
       <SceneCanvas />
       <ScrollJourneyHUD />
-      <SkyMilestones />
-      <LayerCards />
+      <GameHUD />
+      <MiniGames />
       <ClassicView />
       <SajuroQuarantineModal />
     </div>

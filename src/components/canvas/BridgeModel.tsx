@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useSystemStore, GANTRIES_DATA } from '../../store/useSystemStore';
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 
 type Vec3 = [number, number, number];
 
@@ -26,7 +27,7 @@ function Beam({ size, position, rotation = [0, 0, 0], color }: {
   );
 }
 
-function Tower({ x, sonarMode }: { x: number; sonarMode: boolean }) {
+function Tower({ x }: { x: number }) {
   return (
     <group name="Main_Tower_Pylon" position={[x, 0, 0]}>
       {[-9, 9].map((z) => <Beam key={z} size={[3, 190, 3]} position={[0, 95, z]} color={RED} />)}
@@ -44,7 +45,7 @@ function Tower({ x, sonarMode }: { x: number; sonarMode: boolean }) {
       })}
       <mesh name="Foundation_Pier" position={[0, -7.5, 0]}>
         <boxGeometry args={[12, 25, 26]} />
-        <meshStandardMaterial color={sonarMode ? '#0fae6e' : CONCRETE} roughness={0.9} wireframe={sonarMode} />
+        <meshStandardMaterial color={CONCRETE} roughness={0.9} />
       </mesh>
     </group>
   );
@@ -127,12 +128,12 @@ function Cables() {
 }
 
 export function BridgeModel() {
-  const sonarMode = useSystemStore((s) => s.sonarMode);
   const tokenAnomalyStatus = useSystemStore((s) => s.tokenAnomalyStatus);
   const openQuarantineModal = useSystemStore((s) => s.openQuarantineModal);
   const triggerToast = useSystemStore((s) => s.triggerToast);
   const setHoveredGantry = useSystemStore((s) => s.setHoveredGantry);
   const theme = useSystemStore((s) => s.theme);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const trainRef = useRef<THREE.Group>(null);
   const carsTrafficRef = useRef<THREE.Group[]>([]);
   const kiteRef = useRef<THREE.Mesh>(null);
@@ -152,6 +153,7 @@ export function BridgeModel() {
     return geometry;
   }, []);
   const initialWaterPos = useMemo(() => Float32Array.from(waterGeo.attributes.position.array), [waterGeo]);
+  const gantryGeo = useMemo(() => new THREE.PlaneGeometry(10, 3.1), []);
   const gantryCanvases = useMemo(() => GANTRIES_DATA.map((gantry) => {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
@@ -185,7 +187,7 @@ export function BridgeModel() {
     for (let i = 0; i < positions.count; i++) {
       const x = initialWaterPos[i * 3];
       const z = initialWaterPos[i * 3 + 2];
-      positions.setY(i, Math.sin(x * 0.08 + t) * 0.5 + Math.cos(z * 0.1 + t * 1.3) * 0.4);
+      positions.setY(i, prefersReducedMotion ? 0 : Math.sin(x * 0.08 + t) * 0.5 + Math.cos(z * 0.1 + t * 1.3) * 0.4);
     }
     positions.needsUpdate = true;
     if (trainRef.current && tokenAnomalyStatus !== 'quarantined') trainRef.current.position.x = ((t * 8) % 100) - 50;
@@ -194,10 +196,10 @@ export function BridgeModel() {
       car.position.x = (((t * speed + index * 26) % 420) + 420) % 420 - 350;
     });
     if (kiteRef.current) {
-      kiteRef.current.position.y = 184 + Math.sin(t * 1.2) * 1.2;
-      kiteRef.current.rotation.z = Math.sin(t * 0.9) * 0.2;
+      kiteRef.current.position.y = 184 + (prefersReducedMotion ? 0 : Math.sin(t * 1.2) * 1.2);
+      kiteRef.current.rotation.z = prefersReducedMotion ? 0 : Math.sin(t * 0.9) * 0.2;
     }
-    if (beaconRef.current) beaconRef.current.scale.setScalar(1 + 0.15 * Math.sin(t * 3));
+    if (beaconRef.current) beaconRef.current.scale.setScalar(prefersReducedMotion ? 1 : 1 + 0.15 * Math.sin(t * 3));
   });
 
   return (
@@ -236,12 +238,11 @@ export function BridgeModel() {
         </mesh>
       ))}
 
-      <Tower x={0} sonarMode={sonarMode} />
-      <Tower x={-280} sonarMode={sonarMode} />
+      <Tower x={0} />
+      <Tower x={-280} />
       <Truss />
       <Deck />
       <Cables />
-
       {Array.from({ length: 10 }, (_, index) => (
         <group
           key={`traffic-${index}`}
@@ -271,7 +272,7 @@ export function BridgeModel() {
         return (
           <group key={i} position={[x, 63.5, 0]}>
             <mesh
-              geometry={new THREE.PlaneGeometry(10, 3.1)}
+              geometry={gantryGeo}
               onPointerOver={() => {
                 document.body.style.cursor = 'pointer';
                 setHoveredGantry(i);

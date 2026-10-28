@@ -1,7 +1,9 @@
 import { useSystemStore } from '../../store/useSystemStore';
 
 export function ElevationMeter() {
+  const mode = useSystemStore((s) => s.mode);
   const elevation = useSystemStore((s) => s.elevation);
+  if (mode === 'classic') return null;
   const percent = Math.min(100, Math.max(0, ((elevation + 20) / 210) * 100));
 
   return (

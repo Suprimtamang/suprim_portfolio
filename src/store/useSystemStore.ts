@@ -37,7 +37,7 @@ export const LAYERS_DATA: LayerData[] = [
       'OCaml functional interpreters & type checkers',
       'Java self-balancing AVL trees & data structures',
     ],
-    hint: 'Toggle sonar to see the raw mesh beneath the surface.',
+    hint: 'Explore the raw mesh beneath the surface.',
   },
   {
     id: 1,
@@ -59,7 +59,7 @@ export const LAYERS_DATA: LayerData[] = [
     bullets: [
       'Simplify (Portugal Admission Guide) — Interactive roadmap for international students',
       '10+ university admissions guided during earlier MVP and platform growth',
-      'Quidgest Genio Low-Code Software Engineer Apprentice frontend training',
+      'Quidgest Genio — intensive one-week frontend software externship',
     ],
     hint: 'Hover the gantry signs above the road.',
   },
@@ -86,35 +86,41 @@ interface SystemState {
   mode: ViewMode;
   activeLayer: LayerIndex;
   elevation: number;
-  sonarMode: boolean;
   tokenAnomalyStatus: TokenAnomalyStatus;
   hoveredGantry: number | null;
   toastMessage: string | null;
   theme: ThemeMode;
+  journeyProgress: number;
+  focusedLayer: LayerIndex;
+  collectedLayers: Record<0 | 1 | 2 | 3, boolean>;
 
   setMode: (mode: ViewMode) => void;
   setActiveLayer: (layer: LayerIndex) => void;
   setElevation: (y: number) => void;
-  toggleSonar: () => void;
   openQuarantineModal: () => void;
   closeQuarantineModal: () => void;
   quarantineToken: () => void;
   setHoveredGantry: (index: number | null) => void;
   triggerToast: (msg: string) => void;
   toggleTheme: () => void;
+  collectLayer: (layer: 0 | 1 | 2 | 3) => void;
+  setJourneyProgress: (progress: number) => void;
+  setFocusedLayer: (layer: LayerIndex) => void;
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useSystemStore = create<SystemState>((set) => ({
-  mode: 'scroll',
+  mode: 'classic',
   activeLayer: -1,
   elevation: 90,
-  sonarMode: false,
   tokenAnomalyStatus: 'active',
   hoveredGantry: null,
   toastMessage: null,
   theme: 'day',
+  journeyProgress: 0,
+  focusedLayer: -1,
+  collectedLayers: { 0: false, 1: false, 2: false, 3: false },
 
   setMode: (mode) =>
     set((state) => {
@@ -127,16 +133,6 @@ export const useSystemStore = create<SystemState>((set) => ({
   setActiveLayer: (activeLayer) => set({ activeLayer }),
   setElevation: (elevation) => set({ elevation }),
 
-  toggleSonar: () =>
-    set((state) => {
-      const next = !state.sonarMode;
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => set({ toastMessage: null }), 2600);
-      return {
-        sonarMode: next,
-        toastMessage: next ? 'Sonar on — raw geometry' : 'Sonar off',
-      };
-    }),
 
   openQuarantineModal: () => set({ tokenAnomalyStatus: 'inspecting' }),
   closeQuarantineModal: () => set({ tokenAnomalyStatus: 'active' }),
@@ -162,4 +158,24 @@ export const useSystemStore = create<SystemState>((set) => ({
     set((state) => ({
       theme: state.theme === 'day' ? 'night' : 'day',
     })),
+  collectLayer: (layer) =>
+    set((state) => {
+      if (state.collectedLayers[layer]) return state;
+      const collectedLayers = { ...state.collectedLayers, [layer]: true };
+      const labels = {
+        0: 'Kernel & Memory',
+        1: 'AdSecOps & Sajuro Sandbox',
+        2: 'Full-Stack Platforms',
+        3: 'Cloud & Community',
+      };
+      const count = Object.values(collectedLayers).filter(Boolean).length;
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => set({ toastMessage: null }), 3200);
+      return {
+        collectedLayers,
+        toastMessage: count === 4 ? 'Stack complete — all four layers unlocked!' : `You unlocked: ${labels[layer]}!`,
+      };
+    }),
+  setJourneyProgress: (journeyProgress) => set({ journeyProgress: Math.min(1, Math.max(0, journeyProgress)) }),
+  setFocusedLayer: (focusedLayer) => set({ focusedLayer }),
 }));

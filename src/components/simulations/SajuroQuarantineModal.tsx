@@ -1,9 +1,19 @@
+import { useEffect } from 'react';
 import { useSystemStore } from '../../store/useSystemStore';
 
 export function SajuroQuarantineModal() {
   const status = useSystemStore((s) => s.tokenAnomalyStatus);
   const quarantineToken = useSystemStore((s) => s.quarantineToken);
   const closeQuarantineModal = useSystemStore((s) => s.closeQuarantineModal);
+
+  useEffect(() => {
+    if (status !== 'inspecting') return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeQuarantineModal();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [status, closeQuarantineModal]);
 
   if (status !== 'inspecting') return null;
 
@@ -20,12 +30,14 @@ Source IP: unauthorized
 Status:    ACTIVE — traffic paused`}
       </pre>
       <button
+        type="button"
+        autoFocus
         onClick={quarantineToken}
         className="bg-[var(--glass)] border border-[var(--line)] text-[var(--ink)] hover:border-[var(--amber)] hover:text-[var(--amber)] px-3 py-1.5 rounded-lg text-xs font-mono cursor-pointer"
       >
         [ Quarantine Token ]
       </button>
-      <small className="block mt-3 text-[11px] text-[var(--mute)]">Simulation only — no real tokens or data.</small>
+      <small className="block mt-3 text-[11px] text-[var(--mute)]">Interactive demo with illustrative data. No live tokens are used.</small>
       </div>
     </div>
   );
