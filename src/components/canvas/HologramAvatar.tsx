@@ -1,6 +1,7 @@
 import { Float } from '@react-three/drei';
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 
 type HologramAvatarProps = {
   model?: THREE.Object3D;
@@ -56,6 +57,7 @@ function AvatarSilhouette() {
 }
 
 export function HologramAvatar({ model, position = [120, 8, -90], scale = 10 }: HologramAvatarProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const hologramModel = useMemo(() => {
     if (!model) return null;
     const clone = model.clone(true);
@@ -81,9 +83,9 @@ export function HologramAvatar({ model, position = [120, 8, -90], scale = 10 }: 
         <meshStandardMaterial color="#263b4a" roughness={1} />
       </mesh>
       <Float
-        speed={1.4}
-        rotationIntensity={0.12}
-        floatIntensity={0.65}
+        speed={prefersReducedMotion ? 0 : 1.4}
+        rotationIntensity={prefersReducedMotion ? 0 : 0.12}
+        floatIntensity={prefersReducedMotion ? 0 : 0.65}
         floatingRange={[-0.35, 0.35]}
       >
         <group position={position} scale={scale}>

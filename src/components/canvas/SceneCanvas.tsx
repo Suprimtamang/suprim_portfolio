@@ -7,6 +7,7 @@ import { SkyOverview } from './SkyOverview';
 import { ScrollJourney } from './ScrollJourney';
 import { HologramAvatar } from './HologramAvatar';
 import { useSystemStore } from '../../store/useSystemStore';
+import { InteractiveWorld } from './InteractiveWorld';
 
 function DayNightEnvironment() {
   const theme = useSystemStore((s) => s.theme);
@@ -15,6 +16,7 @@ function DayNightEnvironment() {
   const hemiRef = useRef<THREE.HemisphereLight>(null);
   const sunDiscRef = useRef<THREE.Mesh>(null);
   const nightRef = useRef<THREE.Mesh>(null);
+  const sunPointRef = useRef<THREE.PointLight>(null);
   const daySky = useRef(new THREE.Color('#74b9e8')).current;
   const nightSky = useRef(new THREE.Color('#0F172A')).current;
   const dayFog = useRef(new THREE.Color('#74b9e8')).current;
@@ -30,14 +32,15 @@ function DayNightEnvironment() {
     background.lerp(night ? nightSky : daySky, amount);
     fog.color.lerp(night ? nightFog : dayFog, amount);
     if (sunRef.current) {
-      sunRef.current.intensity = THREE.MathUtils.lerp(sunRef.current.intensity, night ? 0.18 : 1.1, amount);
-      sunRef.current.color.lerp(new THREE.Color(night ? '#8ea4ff' : '#ffc48a'), amount);
+      sunRef.current.intensity = THREE.MathUtils.lerp(sunRef.current.intensity, night ? 0.34 : 1.1, amount);
+      sunRef.current.color.lerp(night ? moonColor : sunColor, amount);
     }
     if (hemiRef.current) {
-      hemiRef.current.intensity = THREE.MathUtils.lerp(hemiRef.current.intensity, night ? 0.22 : 0.95, amount);
+      hemiRef.current.intensity = THREE.MathUtils.lerp(hemiRef.current.intensity, night ? 0.38 : 0.95, amount);
     }
     if (nightRef.current) nightRef.current.visible = night;
     if (sunDiscRef.current) sunDiscRef.current.visible = !night;
+    if (sunPointRef.current) sunPointRef.current.intensity = THREE.MathUtils.lerp(sunPointRef.current.intensity, night ? 0 : 220, amount);
   });
 
   return (
@@ -48,7 +51,7 @@ function DayNightEnvironment() {
         <sphereGeometry args={[14, 32, 32]} />
         <meshBasicMaterial color={sunColor} toneMapped={false} />
       </mesh>
-      <pointLight position={[120, 170, -180]} color="#ffd37a" intensity={220} distance={900} decay={2} />
+      <pointLight ref={sunPointRef} position={[120, 170, -180]} color="#ffd37a" intensity={220} distance={900} decay={2} />
       <mesh ref={nightRef} position={[-120, 175, -170]}>
         <sphereGeometry args={[18, 32, 32]} />
         <meshBasicMaterial color={moonColor} toneMapped={false} />
@@ -74,6 +77,7 @@ export function SceneCanvas() {
         <ScrollJourney damping={0.25}>
           <DayNightEnvironment />
           <BridgeModel />
+          <InteractiveWorld />
           <SkyOverview />
           <HologramAvatar />
         </ScrollJourney>

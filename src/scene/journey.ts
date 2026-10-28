@@ -21,23 +21,19 @@ export const JOURNEY: readonly JourneyStop[] = [
 ];
 
 const SEGMENTS = JOURNEY.length - 1;
-const ease = (t: number) => t * t * (3 - 2 * t);
-const tmpA = new THREE.Vector3();
-const tmpB = new THREE.Vector3();
+const camPath = new THREE.CatmullRomCurve3(JOURNEY.map((stop) => new THREE.Vector3(...stop.position)), false, 'catmullrom', 0.5);
+const lookPath = new THREE.CatmullRomCurve3(JOURNEY.map((stop) => new THREE.Vector3(...stop.target)), false, 'catmullrom', 0.5);
 
 export function sampleJourney(
   progress: number,
   outPosition: THREE.Vector3,
   outTarget: THREE.Vector3,
 ): LayerIndex {
-  const p = THREE.MathUtils.clamp(progress, 0, 1) * SEGMENTS;
-  const i = Math.min(Math.floor(p), SEGMENTS - 1);
-  const t = ease(p - i);
-  const a = JOURNEY[i];
-  const b = JOURNEY[i + 1];
+  const normalized = THREE.MathUtils.clamp(progress, 0, 1);
+  const p = normalized * SEGMENTS;
+  camPath.getPointAt(normalized, outPosition);
+  lookPath.getPointAt(normalized, outTarget);
 
-  outPosition.copy(tmpA.set(...a.position).lerp(tmpB.set(...b.position), t));
-  outTarget.copy(tmpA.set(...a.target).lerp(tmpB.set(...b.target), t));
-
-  return JOURNEY[Math.round(p)].layer;
+  const section = Math.min(JOURNEY.length - 1, Math.floor(p));
+  return JOURNEY[section].layer;
 }
