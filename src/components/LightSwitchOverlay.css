@@ -1,0 +1,287 @@
+.light-switch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  background: #0a0a0c;
+  opacity: 1;
+  transition: opacity .8s ease;
+}
+
+.light-switch-overlay.is-revealed {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.light-switch-beam {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 18% 24% at 50% 11%,
+    rgba(255, 247, 215, .98) 0%,
+    rgba(255, 226, 154, .48) 28%,
+    rgba(255, 210, 117, .17) 58%,
+    transparent 100%
+  );
+  opacity: 0;
+  transform: scale(.2);
+  transform-origin: 50% 5%;
+}
+
+.light-switch-overlay.is-flickering .light-switch-beam {
+  animation: light-switch-flicker 1.08s ease-out forwards;
+}
+
+.light-switch-overlay.is-flickering .lamp-bulb {
+  animation: bulb-flicker 1.08s ease-out forwards;
+}
+
+.light-switch-lamp {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 180px;
+  height: auto;
+  overflow: visible;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.lamp-ceiling-plate,
+.lamp-stem,
+.lamp-shade,
+.lamp-shade-rim,
+.lamp-bulb {
+  stroke: rgba(255, 255, 255, .18);
+  stroke-width: 1;
+}
+
+.lamp-ceiling-plate,
+.lamp-stem {
+  fill: url(#lamp-metal);
+}
+
+.lamp-shade {
+  fill: url(#lamp-shade);
+}
+
+.lamp-shade-rim {
+  fill: none;
+  stroke: #aaa99f;
+  stroke-width: 2;
+}
+
+.lamp-bulb {
+  fill: #272622;
+  stroke: #d3c7a6;
+}
+
+.lamp-cord,
+.lamp-cord-highlight {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.lamp-cord {
+  stroke: #77766f;
+  stroke-width: 3;
+}
+
+.lamp-cord-highlight {
+  stroke: rgba(255, 255, 255, .34);
+  stroke-width: 1;
+}
+
+.lamp-handle-ring {
+  fill: #c4b995;
+  stroke: #f0e2b4;
+  stroke-width: 1;
+}
+
+.light-switch-handle {
+  position: absolute;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  width: 88px;
+  height: 100px;
+  justify-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  transform: translateX(-50%);
+  user-select: none;
+}
+
+.light-switch-handle:active {
+  cursor: grabbing;
+}
+
+.light-switch-handle__loop {
+  display: block;
+  width: 15px;
+  height: 13px;
+  border: 2px solid #d5c9a8;
+  border-bottom: 0;
+  border-radius: 9px 9px 0 0;
+}
+
+.light-switch-handle__weight {
+  display: block;
+  width: 22px;
+  height: 34px;
+  margin-top: -1px;
+  border: 1px solid rgba(255, 255, 255, .38);
+  border-radius: 7px 7px 11px 11px;
+  background: linear-gradient(100deg, #45443f, #d0c8b3 48%, #5f5e56);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
+}
+
+.light-switch-handle__hint {
+  margin-top: 11px;
+  color: rgba(255, 255, 255, .55);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+
+.light-switch-prompt {
+  position: absolute;
+  top: min(67vh, 560px);
+  left: 50%;
+  margin: 0;
+  color: rgba(255, 255, 255, .58);
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.4vw, 17px);
+  font-weight: 350;
+  letter-spacing: .035em;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.light-switch-status {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  color: rgba(255, 255, 255, .35);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: .1em;
+  transform: translateX(-50%);
+}
+
+.light-switch-chain {
+  position: fixed;
+  z-index: 10001;
+  top: 21px;
+  right: 81px;
+  display: flex;
+  min-height: 47px;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 0;
+  color: #777;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+
+.light-switch-chain svg {
+  width: 15px;
+  height: 37px;
+  overflow: visible;
+}
+
+.light-switch-chain svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.light-switch-chain svg circle {
+  fill: #99917f;
+  stroke: #d2c7ab;
+  stroke-width: 1;
+}
+
+.light-switch-chain > span {
+  padding-top: 7px;
+}
+
+.light-switch-chain.is-off {
+  color: #d8c99e;
+}
+
+.light-switch-chain:hover svg {
+  animation: chain-nudge 450ms ease-in-out;
+}
+
+@keyframes light-switch-flicker {
+  0% { opacity: 0; transform: scale(.2); }
+  10% { opacity: 1; transform: scale(.35); }
+  18% { opacity: .08; transform: scale(.35); }
+  29% { opacity: .94; transform: scale(.58); }
+  37% { opacity: .16; transform: scale(.58); }
+  52% { opacity: 1; transform: scale(.84); }
+  100% { opacity: .88; transform: scale(1.35); }
+}
+
+@keyframes bulb-flicker {
+  0%, 17%, 35% { fill: #272622; filter: none; }
+  10%, 28%, 48%, 100% { fill: #fff1bf; filter: drop-shadow(0 0 18px #ffdb82); }
+}
+
+@keyframes chain-nudge {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(5px); }
+  70% { transform: translateY(-2px); }
+}
+
+@media (max-width: 640px) {
+  .light-switch-chain {
+    top: 13px;
+    right: 61px;
+    min-height: 42px;
+    gap: 3px;
+    padding: 0 5px;
+    font-size: 7px;
+  }
+
+  .light-switch-chain svg {
+    width: 12px;
+    height: 32px;
+  }
+
+  .light-switch-chain > span {
+    padding-top: 6px;
+  }
+
+  .light-switch-handle {
+    width: 76px;
+  }
+
+  .light-switch-prompt {
+    top: 62vh;
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .light-switch-overlay,
+  .light-switch-handle,
+  .light-switch-chain svg {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
