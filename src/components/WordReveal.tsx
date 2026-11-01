@@ -4,11 +4,12 @@ interface WordRevealProps {
   as?: 'h1' | 'h2' | 'h3';
   className?: string;
   id?: string;
+  redactedWord?: string;
   suffix?: string;
   text: string;
 }
 
-export function WordReveal({ as: Heading = 'h2', className, id, suffix = '', text }: WordRevealProps) {
+export function WordReveal({ as: Heading = 'h2', className, id, redactedWord, suffix = '', text }: WordRevealProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const accessibleText = `${text.replace(/\s+/g, ' ').trim()}${suffix}`;
   const lines = text.split('\n');
@@ -36,8 +37,12 @@ export function WordReveal({ as: Heading = 'h2', className, id, suffix = '', tex
           {line.trim().split(/\s+/).filter(Boolean).map((word) => {
             const index = wordIndex++;
             return (
-              <span className="word-reveal__word" key={`${index}-${word}`} style={{ '--word-index': index } as CSSProperties}>
-                {word}
+              <span
+                className={`word-reveal__word ${word === redactedWord ? 'word-reveal__word--redacted' : ''}`}
+                key={`${index}-${word}`}
+                style={{ '--word-index': index } as CSSProperties}
+              >
+                {word === redactedWord ? <span className="word-reveal__redacted-text">{word}</span> : word}
               </span>
             );
           })}

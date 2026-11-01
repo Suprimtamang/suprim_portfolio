@@ -179,6 +179,16 @@ const ENDORSEMENTS = [
     quote:
       'Had the pleasure to deliver a Full-Stack Development training to Suprim... I was impressed by his enthusiasm and commitment to every task he undertook. Suprim is an exceptionally quick learner with a proactive, hands-on approach to problem-solving.',
   },
+  {
+    name: 'Deepak Pal Thakuri',
+    role: 'Co-Founder · Digigurkhas, Byte.Media & Digital Loyalty Card.io',
+    date: 'November 1, 2026',
+    image: '/Deepak%20Pal%20Thakuri.png',
+    preview:
+      'I highly recommend Suprim for any technical or operations-focused role. He is an exceptionally fast learner who consistently demonstrates a proactive, hands-on approach to problem-solving.',
+    quote:
+      'I highly recommend Suprim for any technical or operations-focused role. He is an exceptionally fast learner who consistently demonstrates a proactive, hands-on approach to problem-solving. Whether navigating CRM platforms, Help Desk software, or engaging with Full-Stack Development tasks, he masters new tools much faster than expected.\n\nSuprim is naturally curious and never hesitates to ask insightful questions or seek out knowledge from documentation and peers to continuously refine his abilities. His enthusiasm, commitment, and professional attitude make him a standout team member who elevates the work of those around him. With his proven adaptability across various environments—from technical support to digital marketing tools like Meta Ads—Suprim will undoubtedly be an invaluable asset to any organization fortunate enough to bring him on board.',
+  },
 ] as const;
 
 const mapHeroWidth = (progress: number) => 92 - 10 * Math.sin(Math.PI * progress);
@@ -449,8 +459,10 @@ interface MattedVideoProps {
   canvasRef?: RefObject<HTMLCanvasElement | null>;
   className: string;
   loop?: boolean;
+  loopUntil?: number;
   matteRef: RefObject<HTMLVideoElement | null>;
   matteSrc: string;
+  paused?: boolean;
   sourceRef: RefObject<HTMLVideoElement | null>;
   sourceSrc: string;
 }
@@ -461,8 +473,10 @@ function MattedVideo({
   canvasRef: externalCanvasRef,
   className,
   loop = false,
+  loopUntil,
   matteRef,
   matteSrc,
+  paused = false,
   sourceRef,
   sourceSrc,
 }: MattedVideoProps) {
@@ -484,7 +498,28 @@ function MattedVideo({
 
     let frame = 0;
     let visible = false;
-    let lastRenderedTime = -1;
+    let lastRenderedSourceTime = -1;
+    let lastRenderedMatteTime = -1;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const syncPlayback = () => {
+      if (!autoPlay) return;
+      if (!visible || paused || reducedMotion.matches) {
+        source.pause();
+        matte.pause();
+        return;
+      }
+
+      const playResults = [source.play(), matte.play()];
+      void Promise.allSettled(playResults).then((results) => {
+        results.forEach((result, index) => {
+          if (result.status === 'rejected' && visible && !paused && !reducedMotion.matches) {
+            const label = index === 0 ? 'running video' : 'running video matte';
+            console.error(`Unable to play the ${label} in the journey tracker.`, result.reason);
+          }
+        });
+      });
+    };
 
     const draw = () => {
       frame = 0;
@@ -495,7 +530,15 @@ function MattedVideo({
         && matte.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
         && !source.seeking
         && !matte.seeking
-        && Math.abs(source.currentTime - lastRenderedTime) > 0.001
+        && Number.isFinite(source.duration)
+        && Number.isFinite(matte.duration)
+        && source.duration > 0
+        && matte.duration > 0
+        && Math.abs(source.currentTime / source.duration - matte.currentTime / matte.duration) < 0.025
+        && (
+          Math.abs(source.currentTime - lastRenderedSourceTime) > 0.001
+          || Math.abs(matte.currentTime - lastRenderedMatteTime) > 0.001
+        )
       ) {
         const width = matte.videoWidth;
         const height = matte.videoHeight;
@@ -513,7 +556,8 @@ function MattedVideo({
             image.data[pixel + 3] = alpha[pixel];
           }
           context.putImageData(image, 0, 0);
-          lastRenderedTime = source.currentTime;
+          lastRenderedSourceTime = source.currentTime;
+          lastRenderedMatteTime = matte.currentTime;
         }
       }
 
@@ -528,21 +572,78 @@ function MattedVideo({
         window.cancelAnimationFrame(frame);
         frame = 0;
       }
+      syncPlayback();
     });
     observer.observe(canvas);
+    reducedMotion.addEventListener('change', syncPlayback);
 
     return () => {
       observer.disconnect();
+      reducedMotion.removeEventListener('change', syncPlayback);
+      if (autoPlay) {
+        source.pause();
+        matte.pause();
+      }
       if (frame !== 0) window.cancelAnimationFrame(frame);
     };
-  }, [canvasRef, matteRef, sourceRef]);
+  }, [autoPlay, canvasRef, matteRef, paused, sourceRef]);
+
+  useEffect(() => {
+    if (!autoPlay) return;
+    const source = sourceRef.current;
+    const matte = matteRef.current;
+    if (!source || !matte) return;
+
+    const synchronizeMatte = () => {
+      if (
+        loopUntil !== undefined
+        && source.readyState >= HTMLMediaElement.HAVE_METADATA
+        && source.currentTime >= loopUntil
+      ) {
+        source.currentTime = 0;
+        if (matte.readyState >= HTMLMediaElement.HAVE_METADATA) {
+          matte.currentTime = 0;
+        }
+        return;
+      }
+
+      if (
+        source.readyState < HTMLMediaElement.HAVE_METADATA
+        || matte.readyState < HTMLMediaElement.HAVE_METADATA
+        || source.seeking
+        || matte.seeking
+        || !Number.isFinite(source.duration)
+        || !Number.isFinite(matte.duration)
+        || source.duration <= 0
+        || matte.duration <= 0
+      ) return;
+
+      const progress = source.currentTime / source.duration;
+      const targetTime = progress * matte.duration;
+      if (Math.abs(matte.currentTime - targetTime) > 0.08) {
+        matte.currentTime = targetTime;
+      }
+    };
+
+    source.addEventListener('timeupdate', synchronizeMatte);
+    source.addEventListener('seeked', synchronizeMatte);
+    source.addEventListener('loadedmetadata', synchronizeMatte);
+    matte.addEventListener('loadedmetadata', synchronizeMatte);
+    synchronizeMatte();
+
+    return () => {
+      source.removeEventListener('timeupdate', synchronizeMatte);
+      source.removeEventListener('seeked', synchronizeMatte);
+      source.removeEventListener('loadedmetadata', synchronizeMatte);
+      matte.removeEventListener('loadedmetadata', synchronizeMatte);
+    };
+  }, [autoPlay, loopUntil, matteRef, sourceRef]);
 
   return (
     <>
       <canvas aria-label={ariaLabel} className={className} ref={canvasRef} role="img" />
       <video
         aria-hidden="true"
-        autoPlay={autoPlay}
         className="journey-media-source"
         loop={loop}
         muted
@@ -553,7 +654,6 @@ function MattedVideo({
       />
       <video
         aria-hidden="true"
-        autoPlay={autoPlay}
         className="journey-media-source"
         loop={loop}
         muted
@@ -573,6 +673,7 @@ export function ScrollytellingPortfolio() {
   const journeySectionRef = useRef<HTMLElement>(null);
   const personalSectionRef = useRef<HTMLElement>(null);
   const contactSectionRef = useRef<HTMLElement>(null);
+  const contactAsideRef = useRef<HTMLParagraphElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const targetTimeRef = useRef(0);
   const smoothedTimeRef = useRef(0);
@@ -587,7 +688,6 @@ export function ScrollytellingPortfolio() {
   const parachuteCanvasRef = useRef<HTMLCanvasElement>(null);
   const credentialsRef = useRef<HTMLDivElement>(null);
   const runnerPositionRef = useRef({ x: 0, y: 0 });
-  const hoveredMilestoneRef = useRef<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [videoPastHero, setVideoPastHero] = useState(false);
   const [greetingVisible, setGreetingVisible] = useState(true);
@@ -611,9 +711,22 @@ export function ScrollytellingPortfolio() {
     progressMode: 'section',
   });
   useScrollProgress(worksSectionRef);
-  useScrollProgress(journeySectionRef);
   useScrollProgress(personalSectionRef);
   useScrollProgress(contactSectionRef);
+
+  useEffect(() => {
+    const aside = contactAsideRef.current;
+    if (!aside || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      aside.classList.add('is-typing');
+      observer.unobserve(aside);
+    }, { threshold: 0.6 });
+
+    observer.observe(aside);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const greeting = heroGreetingRef.current;
@@ -682,23 +795,37 @@ export function ScrollytellingPortfolio() {
 
     const pathLength = path.getTotalLength();
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let progress = 0;
-    let velocity = 0;
-    let previousTime = 0;
     let frame = 0;
 
     const getScrollProgress = () => {
       const bounds = journeyList.getBoundingClientRect();
       const readingPosition = window.innerHeight * 0.52;
-      return Math.max(0, Math.min(1, (readingPosition - bounds.top) / bounds.height));
+      return bounds.height > 0
+        ? Math.max(0, Math.min(1, (readingPosition - bounds.top) / bounds.height))
+        : 0;
+    };
+
+    const seekToProgress = (video: HTMLVideoElement, targetProgress: number) => {
+      if (
+        video.readyState < HTMLMediaElement.HAVE_METADATA
+        || video.seeking
+        || !Number.isFinite(video.duration)
+      ) return;
+      const targetTime = Math.max(0, video.duration - 0.01) * targetProgress;
+      if (Math.abs(video.currentTime - targetTime) > 0.04) {
+        video.currentTime = targetTime;
+      }
     };
 
     const updateCharacters = () => {
+      frame = 0;
+      const progress = getScrollProgress();
       const stageBounds = journeyStage.getBoundingClientRect();
       const pathBounds = path.ownerSVGElement?.getBoundingClientRect();
       const credentialsBounds = credentials.getBoundingClientRect();
       if (!pathBounds || pathBounds.width === 0 || pathBounds.height === 0 || stageBounds.width === 0) return;
 
+      path.style.strokeDashoffset = String(1 - progress);
       const point = path.getPointAtLength(progress * pathLength);
       const x = pathBounds.left - stageBounds.left + (point.x / 100) * pathBounds.width;
       const y = pathBounds.top - stageBounds.top + (point.y / 100) * pathBounds.height;
@@ -723,52 +850,43 @@ export function ScrollytellingPortfolio() {
       const rawParachuteProgress = (readingPosition - absoluteStartY) / distance;
       const parachuteProgress = Math.max(0, Math.min(1, rawParachuteProgress));
       const parachuteY = parachuteStartY + (parachuteEndY - parachuteStartY) * parachuteProgress;
+      const handoffProgress = Math.max(0, Math.min(1, rawParachuteProgress / 0.05));
 
       parachuteCanvas.style.transform = `translate3d(${x}px, ${parachuteY}px, 0) translate(-50%, -50%)`;
-      parachuteCanvas.style.opacity = rawParachuteProgress >= 0 && rawParachuteProgress <= 1 ? '1' : '0';
-      runner.style.opacity = rawParachuteProgress >= 0 ? '0' : '1';
-
-      if (parachute.readyState >= HTMLMediaElement.HAVE_METADATA) {
-        const targetTime = Math.max(0, parachute.duration - 0.01) * parachuteProgress;
-        if (!parachute.seeking && Math.abs(parachute.currentTime - targetTime) > 0.08) {
-          parachute.currentTime = targetTime;
-        }
-        if (
-          parachuteMatte.readyState >= HTMLMediaElement.HAVE_METADATA
-          && !parachuteMatte.seeking
-          && Math.abs(parachuteMatte.currentTime - targetTime) > 0.08
-        ) {
-          parachuteMatte.currentTime = targetTime;
-        }
-      }
+      parachuteCanvas.style.opacity = rawParachuteProgress >= 0 && rawParachuteProgress <= 1
+        ? String(handoffProgress)
+        : '0';
+      runner.style.opacity = rawParachuteProgress >= 0
+        ? String(1 - handoffProgress)
+        : '1';
+      seekToProgress(parachute, parachuteProgress);
+      seekToProgress(parachuteMatte, parachuteProgress);
     };
 
-    const followScroll = (time: number) => {
-      const delta = previousTime === 0 ? 1 : Math.min(2, (time - previousTime) / 16.67);
-      previousTime = time;
-
-      if (hoveredMilestoneRef.current === null) {
-        const target = getScrollProgress();
-        if (reducedMotion) {
-          progress = target;
-          velocity = 0;
-        } else {
-          const springForce = (target - progress) * 0.14;
-          velocity = (velocity + springForce * delta) * Math.pow(0.76, delta);
-          progress = Math.max(0, Math.min(1, progress + velocity * delta));
-        }
-      }
-      updateCharacters();
-
-      frame = window.requestAnimationFrame(followScroll);
+    const scheduleUpdate = () => {
+      if (frame === 0) frame = window.requestAnimationFrame(updateCharacters);
     };
 
-    const onResize = () => updateCharacters();
-    window.addEventListener('resize', onResize);
-    frame = window.requestAnimationFrame(followScroll);
+    const resizeObserver = new ResizeObserver(scheduleUpdate);
+    resizeObserver.observe(journeyStage);
+    resizeObserver.observe(journeyList);
+    resizeObserver.observe(credentials);
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+    parachute.addEventListener('seeked', scheduleUpdate);
+    parachuteMatte.addEventListener('seeked', scheduleUpdate);
+    parachute.addEventListener('loadedmetadata', scheduleUpdate);
+    parachuteMatte.addEventListener('loadedmetadata', scheduleUpdate);
+    updateCharacters();
     return () => {
-      window.removeEventListener('resize', onResize);
-      window.cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', scheduleUpdate);
+      parachute.removeEventListener('seeked', scheduleUpdate);
+      parachuteMatte.removeEventListener('seeked', scheduleUpdate);
+      parachute.removeEventListener('loadedmetadata', scheduleUpdate);
+      parachuteMatte.removeEventListener('loadedmetadata', scheduleUpdate);
+      if (frame !== 0) window.cancelAnimationFrame(frame);
     };
   }, []);
 
@@ -805,7 +923,6 @@ export function ScrollytellingPortfolio() {
   };
 
   const engageMilestone = (index: number, element: HTMLElement) => {
-    hoveredMilestoneRef.current = index;
     setHoveredMilestone(index);
     const stageBounds = journeyStageRef.current?.getBoundingClientRect();
     if (!stageBounds) return;
@@ -816,35 +933,8 @@ export function ScrollytellingPortfolio() {
   };
 
   const releaseMilestone = () => {
-    hoveredMilestoneRef.current = null;
     setHoveredMilestone(null);
   };
-
-  useEffect(() => {
-    const video = runnerVideoRef.current;
-    const matte = runnerMatteRef.current;
-    if (!video || !matte) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      video.pause();
-      matte.pause();
-      return;
-    }
-    if (hoveredMilestone !== null) {
-      video.pause();
-      matte.pause();
-      return;
-    }
-
-    void video.play().catch((error: unknown) => {
-      console.error('Unable to play the running clay animation in the journey tracker.', error);
-    });
-    if (matte.readyState >= HTMLMediaElement.HAVE_METADATA) {
-      matte.currentTime = video.currentTime;
-    }
-    void matte.play().catch((error: unknown) => {
-      console.error('Unable to play the running clay animation matte.', error);
-    });
-  }, [hoveredMilestone]);
 
   return (
     <div className="portfolio-shell">
@@ -937,9 +1027,10 @@ export function ScrollytellingPortfolio() {
                   ariaLabel="Suprim running along the engineering journey"
                   autoPlay
                   className="journey-runner__video"
-                  loop
+                  loopUntil={6}
                   matteRef={runnerMatteRef}
                   matteSrc="/Suprim_running-matte.mp4"
+                  paused={hoveredMilestone !== null}
                   sourceRef={runnerVideoRef}
                   sourceSrc="/Suprim_running.mp4"
                 />
@@ -993,9 +1084,22 @@ export function ScrollytellingPortfolio() {
             <div className="credentials" ref={credentialsRef}>
               <span>CREDENTIALS &amp; STACK</span>
               <div className="credentials__badges">
-                {['Google Cloud Cybersecurity', 'NOVA FCT', 'Quidgest Genio', 'Le Wagon SQL', 'Spring Boot', 'C / OCaml'].map((badge) => (
-                  <span key={badge}>{badge}</span>
-                ))}
+                {[
+                  'Google Cloud Cybersecurity',
+                  'NOVA FCT',
+                  'Quidgest Genio',
+                  'SQL',
+                  'C / OCaml',
+                  'Java',
+                  'Linux / Bash',
+                  'REST APIs',
+                  'React',
+                  'Firebase',
+                  'Cloudflare',
+                  'API Security',
+                  'Docker',
+                  'Flutter',
+                ].map((technology) => <span key={technology}>{technology}</span>)}
               </div>
             </div>
           </div>
@@ -1003,7 +1107,7 @@ export function ScrollytellingPortfolio() {
 
         <section className="story-section story-personal" id="chapter-personal" ref={personalSectionRef}>
           <div className="section-index"><span>04 / OUTSIDE THE TERMINAL</span><span>THE HUMAN BIT</span></div>
-          <WordReveal className="section-title" text={'This Is Where It\nGets Personal'} suffix="." />
+          <WordReveal className="section-title" redactedWord="Personal" text={'This Is Where It\nGets Personal'} suffix="." />
           <ScrollFillRule />
           <div aria-label="Personal cards; activate a card to bring it to the front" className="personal-deck">
             {PERSONAL_CARDS.map((card, index) => {
@@ -1091,7 +1195,9 @@ export function ScrollytellingPortfolio() {
             <p className="eyebrow">That’s the short version.</p>
             <WordReveal as="h2" className="contact-heading__title" text={"You've Reached\nThe End"} suffix="." />
             <ScrollFillRule />
-            <p className="contact-heading__aside">Or The Beginning.</p>
+            <p aria-label="> Or The Beginning ^_^" className="contact-heading__aside" ref={contactAsideRef}>
+              <span aria-hidden="true">&gt; Or The Beginning <span className="contact-heading__emoticon">^_^</span></span>
+            </p>
           </div>
           <section aria-labelledby="endorsements-title" className="endorsements">
             <div className="endorsements__heading">
@@ -1115,7 +1221,7 @@ export function ScrollytellingPortfolio() {
                   tabIndex={0}
                 >
                   <header className="endorsement-card__header">
-                    <div className={`endorsement-card__avatar endorsement-card__avatar--${endorsement.name === 'Joana Bogalho' ? 'joana' : 'alexandre'}`}>
+                    <div className={`endorsement-card__avatar endorsement-card__avatar--${endorsement.name === 'Joana Bogalho' ? 'joana' : endorsement.name === 'Alexandre Batalha' ? 'alexandre' : 'deepak'}`}>
                       <img alt="" src={endorsement.image} />
                     </div>
                     <div>
@@ -1125,7 +1231,7 @@ export function ScrollytellingPortfolio() {
                     </div>
                     <span aria-hidden="true" className="endorsement-card__quote-mark">“</span>
                   </header>
-                  <blockquote>{endorsement.quote}</blockquote>
+                  <blockquote>{'preview' in endorsement ? endorsement.preview : endorsement.quote}</blockquote>
                   <span className="endorsement-card__prompt">OPEN FULL RECOMMENDATION ↗</span>
                 </article>
               ))}
@@ -1137,11 +1243,11 @@ export function ScrollytellingPortfolio() {
                 <span>MAIL ME</span><strong>s.tamang@campus.fct.unl.pt</strong><i>↗</i>
               </a>
               <div className="contact-link">
-                <span>MEET ME IN</span><strong>Lisbon, Portugal</strong><i>⌖</i>
+                <span>LET’S GRAB A COFFEE IN</span><strong>Lisbon, Portugal</strong><i>♨</i>
               </div>
             </div>
             <div className="social-block">
-              <span>OR STALK MY PROFILES</span>
+              <span>OR FIND ME ELSEWHERE ↗</span>
               <div className="social-buttons">
                 <a aria-label="LinkedIn" href="https://www.linkedin.com/in/suprim-tamang-b864a9242" rel="noreferrer" target="_blank"><b>in</b></a>
                 <a aria-label="GitHub" href="https://github.com/Suprimtamang" rel="noreferrer" target="_blank"><b>GH</b></a>

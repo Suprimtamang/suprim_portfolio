@@ -128,8 +128,8 @@
 }
 
 .story-contact {
-  height: 212.5vh;
-  min-height: 95vh;
+  height: auto;
+  min-height: 212.5vh;
   justify-content: space-between;
 }
 
@@ -336,6 +336,35 @@
   font-weight: 700;
   letter-spacing: -.035em;
   line-height: .96;
+}
+
+.word-reveal__word--redacted {
+  position: relative;
+  color: var(--ink);
+  transition: color 800ms ease;
+}
+
+.word-reveal__word--redacted::after {
+  position: absolute;
+  right: 0;
+  bottom: -.08em;
+  left: 0;
+  width: 0;
+  height: .07em;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2c91a0, var(--clay-amber));
+  content: "";
+  transition: width 800ms cubic-bezier(.2, .75, .2, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .story-personal .section-title:hover .word-reveal__word--redacted {
+    color: #2c91a0;
+  }
+
+  .story-personal .section-title:hover .word-reveal__word--redacted::after {
+    width: 100%;
+  }
 }
 
 .word-reveal__line {
@@ -566,8 +595,8 @@
   z-index: 3;
   top: 0;
   left: 0;
-  width: clamp(70px, 8vw, 96px);
-  height: clamp(40px, 4.8vw, 56px);
+  width: clamp(88px, 9vw, 108px);
+  height: clamp(52px, 5.4vw, 64px);
   pointer-events: none;
   will-change: transform;
 }
@@ -732,7 +761,6 @@
 
 .milestone__date,
 .credentials > span,
-.credentials__badges span,
 .case-study__topline,
 .case-meta span,
 .brief-note__eyebrow,
@@ -782,17 +810,19 @@
 .credentials__badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 13px;
+  gap: 8px;
+  margin-top: 18px;
 }
 
 .credentials__badges span {
-  padding: 7px 10px;
-  border: 1px solid var(--hairline);
+  display: inline-block;
+  padding: 4px 12px;
+  border: 1px solid #e5e7eb;
   border-radius: 999px;
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 12px;
+  color: #1f2937;
+  background: #fff;
+  font-family: var(--font-body);
+  font-size: 14px;
 }
 
 .endorsements {
@@ -1221,11 +1251,39 @@
   line-height: .95;
 }
 
-.contact-heading__aside {
+.story-section .contact-heading p.contact-heading__aside {
   margin: 0;
   color: var(--ink-soft);
-  font-size: 16px;
+  font-family: "JetBrains Mono", var(--font-mono), monospace;
+  font-size: clamp(14px, 1.2vw, 16px);
   text-align: right;
+  transition: color 180ms ease, text-shadow 180ms ease;
+}
+
+.contact-heading__aside > span {
+  display: inline-block;
+  max-width: 22ch;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.contact-heading__aside.is-typing > span {
+  animation: terminal-type 1.8s steps(22, end) both;
+}
+
+.contact-heading__emoticon {
+  display: inline-block;
+  color: var(--clay-amber);
+}
+
+.story-section .contact-heading p.contact-heading__aside:hover {
+  color: var(--ink);
+  text-shadow: 0 0 8px rgba(0, 0, 0, .2);
+}
+
+@keyframes terminal-type {
+  from { max-width: 0; }
+  to { max-width: 22ch; }
 }
 
 .contact-panel {
@@ -1657,6 +1715,7 @@
   color: #555;
   font-size: 13px;
   line-height: 1.7;
+  white-space: pre-line;
 }
 
 .case-study {
@@ -2113,6 +2172,7 @@
   .journey-list {
     min-height: 560px;
   }
+
 }
 
 @media (max-width: 640px) {
@@ -2149,8 +2209,8 @@
   }
 
   .journey-runner {
-    width: clamp(42px, 11vw, 46px);
-    height: clamp(24px, 6.3vw, 28px);
+    width: clamp(52px, 13vw, 60px);
+    height: clamp(36px, 9vw, 42px);
   }
 
   .journey-parachute {
@@ -2213,8 +2273,8 @@
   }
 
   .story-contact {
-    height: 212.5vh;
-    min-height: 95vh;
+    height: auto;
+    min-height: 212.5vh;
   }
 
   .section-index {
@@ -2265,6 +2325,7 @@
     min-height: 550px;
     margin: 16px 0 4px;
   }
+
 
   .milestone {
     grid-template-columns: minmax(0, 1fr) 64px;
